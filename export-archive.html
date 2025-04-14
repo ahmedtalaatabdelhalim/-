@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>تصدير الأرشيف</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body { font-family: 'Tahoma', sans-serif; text-align: center; padding: 20px; }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>صفحة تصدير الأرشيف</h1>
+  <button onclick="exportArchivePDF()">تصدير الآن</button>
+
+  <div id="content"></div>
+
+  <script>
+    function exportArchivePDF() {
+      const archive = JSON.parse(localStorage.getItem("archive")) || {};
+      const container = document.getElementById("content");
+      container.innerHTML = "<h3>سجل الأرشيف</h3>";
+      let archiveTotal = 0;
+
+      for (const day in archive) {
+        const entries = archive[day];
+        const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
+        archiveTotal += total;
+        const div = document.createElement("div");
+        div.innerHTML = `<strong>${day}</strong><br>الإجمالي: ${total} جنيه`;
+        entries.forEach(entry => {
+          const p = document.createElement("div");
+          p.textContent = `${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}`;
+          div.appendChild(p);
+        });
+        container.appendChild(div);
+        container.appendChild(document.createElement("hr"));
+      }
+
+      const totalDiv = document.createElement("div");
+      totalDiv.style.marginTop = "20px";
+      totalDiv.style.fontWeight = "bold";
+      totalDiv.textContent = `إجمالي أرباح الأرشيف: ${archiveTotal} جنيه`;
+      container.appendChild(totalDiv);
+
+      html2pdf().from(container).set({
+        margin: 0.5,
+        filename: `أرشيف_الدخل.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }).save();
+    }
+  </script>
+</body>
+</html>
