@@ -34,37 +34,31 @@
     }
 
     function exportPDF() {
-      // فتح موقع AppCreator24 أو أي رابط خارجي آخر
-      window.open("https://www.appcreator24.com/app", "_blank");
+      const entries = JSON.parse(localStorage.getItem("entries")) || [];
+      const container = document.getElementById("content");
+      container.innerHTML = `<h3>${getTodayDate()}</h3>`;
 
-      // بعد ثانية واحدة، يتم توليد وحفظ ملف PDF
-      setTimeout(() => {
-        const entries = JSON.parse(localStorage.getItem("entries")) || [];
-        const container = document.getElementById("content");
-        container.innerHTML = `<h3>${getTodayDate()}</h3>`;
+      let total = 0;
+      entries.forEach(entry => {
+        const div = document.createElement("div");
+        div.textContent = `${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}`;
+        container.appendChild(div);
+        total += Number(entry.price);
+      });
 
-        let total = 0;
-        entries.forEach(entry => {
-          const div = document.createElement("div");
-          div.textContent = `${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}`;
-          container.appendChild(div);
-          total += Number(entry.price);
-        });
+      const totalDiv = document.createElement("div");
+      totalDiv.style.marginTop = "20px";
+      totalDiv.style.fontWeight = "bold";
+      totalDiv.textContent = `إجمالي أرباح اليوم: ${total} جنيه`;
+      container.appendChild(totalDiv);
 
-        const totalDiv = document.createElement("div");
-        totalDiv.style.marginTop = "20px";
-        totalDiv.style.fontWeight = "bold";
-        totalDiv.textContent = `إجمالي أرباح اليوم: ${total} جنيه`;
-        container.appendChild(totalDiv);
-
-        html2pdf().from(container).set({
-          margin: 0.5,
-          filename: `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        }).save();
-      }, 1000); // تأخير لمدة ثانية (يمكن زيادتها حسب الحاجة)
+      html2pdf().from(container).set({
+        margin: 0.5,
+        filename: `الدخل_${getTodayDate().replace(/\s+/g, "_")}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      }).save();
     }
   </script>
 </body>
