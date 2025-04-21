@@ -5,18 +5,22 @@
   <title>تتبع الدخل اليومي</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Firebase -->
+  <!-- Firebase App -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCd76nAgO7m4tBHKf-rWkzwvC4TwrkP2Qg",
       authDomain: "ps4-tracker-4daf6.firebaseapp.com",
       projectId: "ps4-tracker-4daf6",
-      storageBucket: "ps4-tracker-4daf6.appspot.com",
+      storageBucket: "ps4-tracker-4daf6.firebasestorage.app",
       messagingSenderId: "837314276106",
-      appId: "1:837314276106:web:81ca8492a49168a232a8f3"
+      appId: "1:837314276106:web:81ca8492a49168a232a8f3",
+      measurementId: "G-D89Y8216KH"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
@@ -72,7 +76,7 @@
       align-items: center;
       flex-wrap: wrap;
     }
-    button {
+    button, .fab {
       margin: 5px;
       padding: 10px 20px;
       border: none;
@@ -95,15 +99,51 @@
       justify-content: center;
       align-items: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 1000;
     }
     .archive-btn {
-      background-color: #007bff;
+      background-color: #4a90e2;
       color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 20px;
     }
-    .back-btn {
-      background-color: #6c757d;
+    .archive-btn:hover {
+      background-color: #357ab7;
+      transform: scale(1.05);
+    }
+    .archive-btn:active {
+      transform: scale(0.95);
+    }
+    .archive-btn:focus {
+      outline: none;
+    }
+    .back-btn, .back-to-home-btn {
+      background-color: #dc3545;
       color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 20px;
+      display: none;
+    }
+    .back-btn:hover, .back-to-home-btn:hover {
+      background-color: #c13536;
+      transform: scale(1.05);
+    }
+    .back-btn:active, .back-to-home-btn:active {
+      transform: scale(0.95);
+    }
+    .back-btn:focus, .back-to-home-btn:focus {
+      outline: none;
     }
   </style>
 </head>
@@ -121,13 +161,14 @@
   </header>
 
   <div id="entries"></div>
-
   <button class="fab" id="addButton" onclick="showAddEntryPrompt()">+</button>
   <button class="archive-btn" onclick="showArchive()">عرض الأرشيف</button>
+  <button class="back-to-home-btn" onclick="goBackToHome()">رجوع للصفحة الرئيسية</button>
+  <button class="back-btn" onclick="goBack()">رجوع</button>
 
   <script>
     let entries = [];
-    let inArchiveView = false;
+    let selectedDate = null;  // لتخزين التاريخ المحدد عند اختيار اليوم من الأرشيف
 
     function getTodayDate() {
       const now = new Date();
@@ -150,8 +191,7 @@
       const device = prompt("أدخل رقم الجهاز:");
       if (!device) return;
       const time = new Date().toLocaleTimeString("ar-EG");
-      const date = new Date().toLocaleDateString("ar-EG");
-      const entry = { price, device, time, date };
+      const entry = { price, device, time, date: getTodayDate() };
 
       db.collection("entries").add(entry).then(() => {
         loadEntries();
@@ -172,77 +212,68 @@
 
     function loadEntries() {
       db.collection("entries").get().then((snapshot) => {
-        const today = new Date().toLocaleDateString("ar-EG");
         entries = [];
         snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.date === today) {
-            entries.push(data);
-          }
+          const entryData = doc.data();
+          entries.push(entryData);
         });
-        inArchiveView = false;
-        document.getElementById("addButton").style.display = 'flex';
         updateDisplay();
       });
     }
 
-    function showArchive() {
-      inArchiveView = true;
-      document.getElementById("addButton").style.display = 'none';
-      db.collection("entries").get().then(snapshot => {
-        const datesMap = {};
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (!datesMap[data.date]) datesMap[data.date] = [];
-          datesMap[data.date].push(data);
-        });
-
-        const container = document.getElementById("entries");
-        container.innerHTML = `<h3>الأرشيف</h3>`;
-
-        Object.keys(datesMap).forEach(date => {
-          const btn = document.createElement("button");
-          btn.textContent = new Date(date).toLocaleDateString("ar-EG", {
-            weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
-          });
-          btn.onclick = () => showEntriesForDate(date, datesMap[date]);
-          container.appendChild(btn);
-        });
-
-        const backBtn = document.createElement("button");
-        backBtn.textContent = "رجوع للصفحة الرئيسية";
-        backBtn.className = "back-btn";
-        backBtn.onclick = loadEntries;
-        container.appendChild(document.createElement("br"));
-        container.appendChild(backBtn);
-      });
-    }
-
-    function showEntriesForDate(date, list) {
+    function showEntriesByDate(date) {
+      selectedDate = date;
       const container = document.getElementById("entries");
-      container.innerHTML = `<h3>${new Date(date).toLocaleDateString("ar-EG", {
-        weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
-      })}</h3>`;
-      let total = 0;
-
-      list.forEach(entry => {
+      const filteredEntries = entries.filter(entry => entry.date === date);
+      const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
+      container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
+      filteredEntries.forEach(entry => {
         const div = document.createElement("div");
         div.className = "entry";
         div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
         container.appendChild(div);
-        total += Number(entry.price);
+      });
+      container.innerHTML += `<h4>إجمالي الأرباح لهذا اليوم: ${total} جنيه</h4>`;
+      document.querySelector(".back-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+    }
+
+    function showArchive() {
+      const container = document.getElementById("entries");
+      document.getElementById("addButton").style.display = 'none';
+      container.innerHTML = "<h3>الأرشيف</h3>";
+
+      const dates = [...new Set(entries.map(entry => entry.date))];
+      dates.forEach(date => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `<button onclick="showEntriesByDate('${date}')">${date}</button>`;
+        container.appendChild(div);
       });
 
-      const totalDiv = document.createElement("div");
-      totalDiv.style.marginTop = '10px';
-      totalDiv.innerHTML = `<strong>إجمالي الأرباح لهذا اليوم: ${total} جنيه</strong>`;
-      container.appendChild(totalDiv);
+      document.querySelector(".archive-btn").style.display = "none";
+      document.querySelector(".back-to-home-btn").style.display = "block";
+    }
 
-      const backBtn = document.createElement("button");
-      backBtn.textContent = "رجوع للأرشيف";
-      backBtn.className = "back-btn";
-      backBtn.onclick = showArchive;
-      container.appendChild(backBtn);
+    function goBack() {
+      selectedDate = null;
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>تتبع الدخل اليومي</h3>";
+      loadEntries();
+      document.querySelector(".back-btn").style.display = "none";
+      document.querySelector(".archive-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+      document.getElementById("addButton").style.display = 'flex';
+    }
+
+    function goBackToHome() {
+      selectedDate = null;
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>تتبع الدخل اليومي</h3>";
+      loadEntries();
+      document.querySelector(".archive-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+      document.getElementById("addButton").style.display = 'flex';
     }
 
     loadEntries();
