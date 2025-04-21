@@ -4,6 +4,27 @@
   <meta charset="UTF-8">
   <title>تتبع الدخل اليومي</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase App -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCd76nAgO7m4tBHKf-rWkzwvC4TwrkP2Qg",
+      authDomain: "ps4-tracker-4daf6.firebaseapp.com",
+      projectId: "ps4-tracker-4daf6",
+      storageBucket: "ps4-tracker-4daf6.firebasestorage.app",
+      messagingSenderId: "837314276106",
+      appId: "1:837314276106:web:81ca8492a49168a232a8f3",
+      measurementId: "G-D89Y8216KH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
   <style>
     body {
       font-family: 'Tahoma', sans-serif;
@@ -38,14 +59,14 @@
       margin: 5px 0;
       flex: 1 1 100%;
     }
-    #entries, #archiveDisplay {
+    #entries {
       margin: 10px;
       padding: 10px;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .entry, .archive-entry {
+    .entry {
       background: #e8f0fe;
       margin: 5px 0;
       padding: 10px;
@@ -83,14 +104,6 @@
       background-color: #dc3545;
       color: white;
     }
-    .archive-day {
-      cursor: pointer;
-      color: #007bff;
-      margin: 5px;
-    }
-    .archive-day:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
@@ -106,24 +119,11 @@
     <h1>تتبع الدخل اليومي</h1>
   </header>
 
-  <div>
-    <button onclick="window.open('export-today.html', '_blank')">تصدير اليوم إلى PDF</button>
-    <button onclick="window.open('export-archive.html', '_blank')">تصدير الأرشيف إلى PDF</button>
-    <button onclick="toggleArchive()">عرض/إخفاء سجل الأرشيف</button>
-  </div>
-
   <div id="entries"></div>
-  <div id="archiveDisplay" style="display:none;"></div>
   <button class="fab" onclick="showAddEntryPrompt()">+</button>
 
   <script>
-    let entries = JSON.parse(localStorage.getItem("entries")) || [];
-    let archive = JSON.parse(localStorage.getItem("archive")) || {};
-
-    function saveEntries() {
-      localStorage.setItem("entries", JSON.stringify(entries));
-      localStorage.setItem("archive", JSON.stringify(archive));
-    }
+    let entries = [];
 
     function getTodayDate() {
       const now = new Date();
@@ -146,9 +146,11 @@
       const device = prompt("أدخل رقم الجهاز:");
       if (!device) return;
       const time = new Date().toLocaleTimeString("ar-EG");
-      entries.push({ price, device, time });
-      saveEntries();
-      updateDisplay();
+      const entry = { price, device, time };
+
+      db.collection("entries").add(entry).then(() => {
+        loadEntries();
+      });
     }
 
     function updateDisplay() {
@@ -157,80 +159,21 @@
       entries.forEach((entry, index) => {
         const div = document.createElement("div");
         div.className = "entry";
-        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>
-                          <button class='delete-btn' onclick='deleteEntry(${index})'>حذف</button>`;
+        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
         container.appendChild(div);
       });
       updateHeaderInfo();
     }
 
-    function deleteEntry(index) {
-      entries.splice(index, 1);
-      saveEntries();
-      updateDisplay();
-    }
-
-    function archiveOldEntries() {
-      const today = getTodayDate();
-      const lastSavedDay = localStorage.getItem("lastDay");
-      if (lastSavedDay && lastSavedDay !== today && entries.length > 0) {
-        archive[lastSavedDay] = archive[lastSavedDay] || [];
-        archive[lastSavedDay].push(...entries);
+    function loadEntries() {
+      db.collection("entries").get().then((snapshot) => {
         entries = [];
-        saveEntries();
-      }
-      localStorage.setItem("lastDay", today);
-    }
-
-    function toggleArchive() {
-      const display = document.getElementById("archiveDisplay");
-      display.style.display = display.style.display === "none" ? "block" : "none";
-      if (display.style.display === "block") renderArchive();
-    }
-
-    function renderArchive() {
-      const container = document.getElementById("archiveDisplay");
-      container.innerHTML = "<h3>سجل الأرشيف</h3>";
-      for (const day in archive) {
-        const total = archive[day].reduce((sum, e) => sum + Number(e.price), 0);
-        const div = document.createElement("div");
-        div.className = "archive-day";
-        div.textContent = `${day} - الإجمالي: ${total} جنيه`;
-        div.onclick = () => showArchiveDetails(day);
-        container.appendChild(div);
-      }
-    }
-
-    function showArchiveDetails(day) {
-      const container = document.getElementById("entries");
-      container.innerHTML = `<h3>${day}</h3>`;
-      archive[day].forEach((entry) => {
-        const div = document.createElement("div");
-        div.className = "entry";
-        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-        container.appendChild(div);
+        snapshot.forEach(doc => entries.push(doc.data()));
+        updateDisplay();
       });
-      const del = document.createElement("button");
-      del.textContent = "حذف هذا اليوم";
-      del.className = "delete-btn";
-      del.onclick = () => deleteArchiveDay(day);
-      container.appendChild(del);
-
-      const back = document.createElement("button");
-      back.textContent = "رجوع";
-      back.onclick = () => updateDisplay();
-      container.appendChild(back);
     }
 
-    function deleteArchiveDay(day) {
-      delete archive[day];
-      saveEntries();
-      updateDisplay();
-      renderArchive();
-    }
-
-    archiveOldEntries();
-    updateDisplay();
+    loadEntries();
   </script>
 </body>
 </html>
