@@ -104,6 +104,60 @@
       background-color: #dc3545;
       color: white;
     }
+
+    /* زر عرض الأرشيف بشكل أنيق */
+    .archive-btn {
+      background-color: #4a90e2;
+      color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 20px;
+    }
+
+    .archive-btn:hover {
+      background-color: #357ab7;
+      transform: scale(1.05);
+    }
+
+    .archive-btn:active {
+      transform: scale(0.95);
+    }
+
+    .archive-btn:focus {
+      outline: none;
+    }
+
+    /* زر عرض اليوم بشكل أنيق */
+    .today-btn {
+      background-color: #ff9800; /* اللون البرتقالي */
+      color: white; /* النص باللون الأبيض */
+      font-size: 18px; /* حجم الخط */
+      padding: 15px 30px; /* مساحة من الداخل */
+      border: none; /* إزالة الحدود */
+      border-radius: 30px; /* زوايا دائرية */
+      cursor: pointer; /* تغيير المؤشر إلى يد عند التمرير */
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* ظل لطيف */
+      transition: background-color 0.3s, transform 0.3s; /* تأثيرات التمرير */
+      margin-top: 20px;
+    }
+
+    .today-btn:hover {
+      background-color: #e68900; /* لون أغمق عند التمرير */
+      transform: scale(1.05); /* تكبير الزر قليلاً عند التمرير */
+    }
+
+    .today-btn:active {
+      transform: scale(0.95); /* تصغير الزر قليلاً عند الضغط عليه */
+    }
+
+    .today-btn:focus {
+      outline: none; /* إزالة التأثير عند التركيز */
+    }
   </style>
 </head>
 <body>
@@ -120,6 +174,13 @@
   </header>
 
   <div id="entries"></div>
+
+  <!-- زر عرض الأرشيف بشكل أنيق -->
+  <button class="archive-btn" onclick="showArchive()">عرض الأرشيف</button>
+
+  <!-- زر عرض اليوم بشكل أنيق -->
+  <button class="today-btn" onclick="showToday()">عرض اليوم</button>
+
   <button class="fab" onclick="showAddEntryPrompt()">+</button>
 
   <script>
@@ -171,6 +232,45 @@
         snapshot.forEach(doc => entries.push(doc.data()));
         updateDisplay();
       });
+    }
+
+    function showArchive() {
+      db.collection("entries")
+        .orderBy("time", "desc")  // ترتيب الأرشيف حسب الوقت
+        .get()
+        .then((snapshot) => {
+          const archiveEntries = [];
+          snapshot.forEach(doc => archiveEntries.push(doc.data()));
+
+          const archiveContainer = document.getElementById("entries");
+          archiveContainer.innerHTML = "<h3>الأرشيف</h3>";
+          archiveEntries.forEach(entry => {
+            const div = document.createElement("div");
+            div.className = "entry";
+            div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+            archiveContainer.appendChild(div);
+          });
+        });
+    }
+
+    function showToday() {
+      const todayDate = getTodayDate(); // الحصول على تاريخ اليوم
+      db.collection("entries")
+        .where("date", "==", todayDate) // استعلام للحصول على المدخلات الخاصة باليوم فقط
+        .get()
+        .then((snapshot) => {
+          const todayEntries = [];
+          snapshot.forEach(doc => todayEntries.push(doc.data()));
+
+          const todayContainer = document.getElementById("entries");
+          todayContainer.innerHTML = `<h3>مدخلات اليوم: ${todayDate}</h3>`;
+          todayEntries.forEach(entry => {
+            const div = document.createElement("div");
+            div.className = "entry";
+            div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+            todayContainer.appendChild(div);
+          });
+        });
     }
 
     loadEntries();
