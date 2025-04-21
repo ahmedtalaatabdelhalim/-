@@ -100,12 +100,6 @@
       align-items: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
-    .delete-btn {
-      background-color: #dc3545;
-      color: white;
-    }
-
-    /* زر عرض الأرشيف بشكل أنيق */
     .archive-btn {
       background-color: #4a90e2;
       color: white;
@@ -118,45 +112,38 @@
       transition: background-color 0.3s, transform 0.3s;
       margin-top: 20px;
     }
-
     .archive-btn:hover {
       background-color: #357ab7;
       transform: scale(1.05);
     }
-
     .archive-btn:active {
       transform: scale(0.95);
     }
-
     .archive-btn:focus {
       outline: none;
     }
-
-    /* زر عرض اليوم بشكل أنيق */
-    .today-btn {
-      background-color: #ff9800; /* اللون البرتقالي */
-      color: white; /* النص باللون الأبيض */
-      font-size: 18px; /* حجم الخط */
-      padding: 15px 30px; /* مساحة من الداخل */
-      border: none; /* إزالة الحدود */
-      border-radius: 30px; /* زوايا دائرية */
-      cursor: pointer; /* تغيير المؤشر إلى يد عند التمرير */
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* ظل لطيف */
-      transition: background-color 0.3s, transform 0.3s; /* تأثيرات التمرير */
+    .back-btn, .back-to-home-btn {
+      background-color: #dc3545;
+      color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
       margin-top: 20px;
+      display: none;
     }
-
-    .today-btn:hover {
-      background-color: #e68900; /* لون أغمق عند التمرير */
-      transform: scale(1.05); /* تكبير الزر قليلاً عند التمرير */
+    .back-btn:hover, .back-to-home-btn:hover {
+      background-color: #c13536;
+      transform: scale(1.05);
     }
-
-    .today-btn:active {
-      transform: scale(0.95); /* تصغير الزر قليلاً عند الضغط عليه */
+    .back-btn:active, .back-to-home-btn:active {
+      transform: scale(0.95);
     }
-
-    .today-btn:focus {
-      outline: none; /* إزالة التأثير عند التركيز */
+    .back-btn:focus, .back-to-home-btn:focus {
+      outline: none;
     }
   </style>
 </head>
@@ -174,17 +161,13 @@
   </header>
 
   <div id="entries"></div>
-
-  <!-- زر عرض الأرشيف بشكل أنيق -->
   <button class="archive-btn" onclick="showArchive()">عرض الأرشيف</button>
-
-  <!-- زر عرض اليوم بشكل أنيق -->
-  <button class="today-btn" onclick="showToday()">عرض اليوم</button>
-
-  <button class="fab" onclick="showAddEntryPrompt()">+</button>
+  <button class="back-to-home-btn" onclick="goBackToHome()">رجوع للصفحة الرئيسية</button>
+  <button class="back-btn" onclick="goBack()">رجوع</button>
 
   <script>
     let entries = [];
+    let selectedDate = null;  // لتخزين التاريخ المحدد عند اختيار اليوم من الأرشيف
 
     function getTodayDate() {
       const now = new Date();
@@ -207,7 +190,7 @@
       const device = prompt("أدخل رقم الجهاز:");
       if (!device) return;
       const time = new Date().toLocaleTimeString("ar-EG");
-      const entry = { price, device, time };
+      const entry = { price, device, time, date: getTodayDate() };
 
       db.collection("entries").add(entry).then(() => {
         loadEntries();
@@ -217,7 +200,7 @@
     function updateDisplay() {
       const container = document.getElementById("entries");
       container.innerHTML = `<h3>${getTodayDate()}</h3>`;
-      entries.forEach((entry, index) => {
+      entries.forEach(entry => {
         const div = document.createElement("div");
         div.className = "entry";
         div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
@@ -229,48 +212,64 @@
     function loadEntries() {
       db.collection("entries").get().then((snapshot) => {
         entries = [];
-        snapshot.forEach(doc => entries.push(doc.data()));
+        snapshot.forEach(doc => {
+          const entryData = doc.data();
+          entries.push(entryData);
+        });
         updateDisplay();
       });
     }
 
-    function showArchive() {
-      db.collection("entries")
-        .orderBy("time", "desc")  // ترتيب الأرشيف حسب الوقت
-        .get()
-        .then((snapshot) => {
-          const archiveEntries = [];
-          snapshot.forEach(doc => archiveEntries.push(doc.data()));
-
-          const archiveContainer = document.getElementById("entries");
-          archiveContainer.innerHTML = "<h3>الأرشيف</h3>";
-          archiveEntries.forEach(entry => {
-            const div = document.createElement("div");
-            div.className = "entry";
-            div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-            archiveContainer.appendChild(div);
-          });
-        });
+    function showEntriesByDate(date) {
+      selectedDate = date;
+      const container = document.getElementById("entries");
+      const filteredEntries = entries.filter(entry => entry.date === date);
+      const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
+      container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
+      filteredEntries.forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+        container.appendChild(div);
+      });
+      container.innerHTML += `<h4>إجمالي الأرباح لهذا اليوم: ${total} جنيه</h4>`;
+      document.querySelector(".back-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
     }
 
-    function showToday() {
-      const todayDate = getTodayDate(); // الحصول على تاريخ اليوم
-      db.collection("entries")
-        .where("date", "==", todayDate) // استعلام للحصول على المدخلات الخاصة باليوم فقط
-        .get()
-        .then((snapshot) => {
-          const todayEntries = [];
-          snapshot.forEach(doc => todayEntries.push(doc.data()));
+    function showArchive() {
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>الأرشيف</h3>";
 
-          const todayContainer = document.getElementById("entries");
-          todayContainer.innerHTML = `<h3>مدخلات اليوم: ${todayDate}</h3>`;
-          todayEntries.forEach(entry => {
-            const div = document.createElement("div");
-            div.className = "entry";
-            div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-            todayContainer.appendChild(div);
-          });
-        });
+      const dates = [...new Set(entries.map(entry => entry.date))];
+      dates.forEach(date => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `<button onclick="showEntriesByDate('${date}')">${date}</button>`;
+        container.appendChild(div);
+      });
+
+      document.querySelector(".archive-btn").style.display = "none";
+      document.querySelector(".back-to-home-btn").style.display = "block";
+    }
+
+    function goBack() {
+      selectedDate = null;
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>تتبع الدخل اليومي</h3>";
+      loadEntries();
+      document.querySelector(".back-btn").style.display = "none";
+      document.querySelector(".archive-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+    }
+
+    function goBackToHome() {
+      selectedDate = null;
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>تتبع الدخل اليومي</h3>";
+      loadEntries();
+      document.querySelector(".archive-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
     }
 
     loadEntries();
