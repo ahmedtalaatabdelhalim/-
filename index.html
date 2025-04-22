@@ -198,27 +198,69 @@
       });
     }
 
-    function updateDisplay() {
-  const container = document.getElementById("entries");
-  container.innerHTML = `<h3>${getTodayDate()}</h3>`;
+    function convertArabicTimeTo24Hour(timeStr) {
+  const arabicToEnglish = timeStr.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+  const parts = arabicToEnglish.trim().split(' ');
+  const timePart = parts[0];
+  const period = parts[1];
 
-  // ترتيب العمليات حسب التوقيت من الأقدم للأحدث
-  const sortedEntries = entries
-    .filter(entry => entry.date === getTodayDate())
+  let [hour, minute, second] = timePart.split(':').map(Number);
+
+  if (period === 'م' && hour !== 12) hour += 12;
+  if (period === 'ص' && hour === 12) hour = 0;
+
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+}
+
+function updateDisplay() {
+  const container = document.getElementById("entries");
+  container.innerHTML = "";
+
+  const now = new Date();
+  let startOfDay = new Date(now);
+  if (now.getHours() < 6) {
+    // لو قبل 6 صباحًا، نرجع ليوم أمس الساعة 6:00 ص
+    startOfDay.setDate(now.getDate() - 1);
+  }
+  startOfDay.setHours(6, 0, 0, 0);
+
+  const todayDate = startOfDay.toISOString().split('T')[0];
+
+  const todayEntries = entries
+    .filter(entry => entry.date === todayDate)
     .sort((a, b) => {
-      const timeA = new Date(`1970-01-01T${a.time}`);
-      const timeB = new Date(`1970-01-01T${b.time}`);
-      return timeA - timeB;
+      const timeA = convertArabicTimeTo24Hour(a.time);
+      const timeB = convertArabicTimeTo24Hour(b.time);
+      return timeA.localeCompare(timeB);
     });
 
-  sortedEntries.forEach(entry => {
+  if (todayEntries.length === 0) {
+    container.innerHTML = "<p>لا توجد عمليات لليوم.</p>";
+    return;
+  }
+
+  const dateHeader = document.createElement("h3");
+  dateHeader.textContent = formatArabicDate(todayDate);
+  container.appendChild(dateHeader);
+
+  todayEntries.forEach(entry => {
     const div = document.createElement("div");
-    div.className = "entry";
-    div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+    div.className = "entry-item";
+    div.innerText = `${entry.amount} جنيه - جهاز ${entry.device} - ${entry.time}`;
     container.appendChild(div);
   });
 
-  updateHeaderInfo();
+  // تحديث الإحصائيات
+  const total = todayEntries.reduce((sum, entry) => sum + parseFloat(entry.amount), 0);
+  document.getElementById("totalProfit").textContent = total;
+  document.getElementById("totalOperations").textContent = todayEntries.length;
+}
+
+function formatArabicDate(dateString) {
+  const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+  const date = new Date(dateString);
+  const dayName = days[date.getDay()];
+  return `${dayName}، ${dateString}`;
 }
 
     function loadEntries() {
