@@ -190,17 +190,28 @@
     }
 
     function showAddEntryPrompt() {
-      const price = prompt("أدخل السعر بالجنيه:");
-      if (!price) return;
-      const device = prompt("أدخل رقم الجهاز:");
-      if (!device) return;
-      const time = new Date().toLocaleTimeString("ar-EG");
-      const entry = { price, device, time, date: getTodayDate() };
+  const price = prompt("أدخل السعر بالجنيه:");
+  if (!price) return;
+  const device = prompt("أدخل رقم الجهاز:");
+  if (!device) return;
 
-      db.collection("entries").add(entry).then(() => {
-        loadEntries();
-      });
-    }
+  const now = new Date();
+  const timeText = now.toLocaleTimeString("ar-EG");
+  const timestamp = now.getTime();
+
+  const entry = {
+    price,
+    device,
+    time: timeText,      // للعرض
+    timestamp,           // للترتيب الحقيقي
+    date: getTodayDate()
+  };
+
+  db.collection("entries").add(entry).then(() => {
+    loadEntries();
+  });
+}
+
 
     function updateDisplay() {
   const container = document.getElementById("entries");
@@ -240,8 +251,7 @@
       selectedDate = date;
       const container = document.getElementById("entries");
       const filteredEntries = entries.filter(entry => entry.date === date);
-      filteredEntries.sort((a, b) => {
-  return new Date(`1970-01-01T${a.time}`) - new Date(`1970-01-01T${b.time}`);
+      filteredEntries.sort((a, b) => a.timestamp - b.timestamp);
 });
       const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
       container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
