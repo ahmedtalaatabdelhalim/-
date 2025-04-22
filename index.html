@@ -251,7 +251,7 @@
       selectedDate = date;
       const container = document.getElementById("entries");
       const filteredEntries = entries.filter(entry => entry.date === date);
-      filteredEntries.sort((a, b) => a.timestamp - b.timestamp);
+      .sort((a, b) => a.timestamp - b.timestamp);
 });
       const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
       container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
