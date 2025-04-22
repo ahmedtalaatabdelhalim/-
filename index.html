@@ -199,16 +199,27 @@
     }
 
     function updateDisplay() {
-      const container = document.getElementById("entries");
-      container.innerHTML = `<h3>${getTodayDate()}</h3>`;
-      entries.forEach(entry => {
-        const div = document.createElement("div");
-        div.className = "entry";
-        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-        container.appendChild(div);
-      });
-      updateHeaderInfo();
-    }
+  const container = document.getElementById("entries");
+  container.innerHTML = `<h3>${getTodayDate()}</h3>`;
+
+  // ترتيب العمليات حسب التوقيت من الأقدم للأحدث
+  const sortedEntries = entries
+    .filter(entry => entry.date === getTodayDate())
+    .sort((a, b) => {
+      const timeA = new Date(`1970-01-01T${a.time}`);
+      const timeB = new Date(`1970-01-01T${b.time}`);
+      return timeA - timeB;
+    });
+
+  sortedEntries.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+    container.appendChild(div);
+  });
+
+  updateHeaderInfo();
+}
 
     function loadEntries() {
   const today = getTodayDate();
