@@ -211,15 +211,18 @@
     }
 
     function loadEntries() {
-      db.collection("entries").get().then((snapshot) => {
-        entries = [];
-        snapshot.forEach(doc => {
-          const entryData = doc.data();
-          entries.push(entryData);
-        });
-        updateDisplay();
-      });
-    }
+  const today = getTodayDate();
+  db.collection("entries").get().then((snapshot) => {
+    entries = [];
+    snapshot.forEach(doc => {
+      const entryData = doc.data();
+      if (entryData.date === today) {
+        entries.push(entryData);
+      }
+    });
+    updateDisplay();
+  });
+}
 
     function showEntriesByDate(date) {
       selectedDate = date;
