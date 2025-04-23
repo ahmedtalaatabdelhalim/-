@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+// ✅ النسخة الجديدة تشمل: // - حفظ المستخدم محليًا واستعادته تلقائيًا // - تتبع محاولات الخروج وتقييدها إلى مرتين فقط في قاعدة البيانات // - منع تسجيل خروج إضافي بعد المحاولتين حتى نهاية الشيفت
+
+<!DOCTYPE html><html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <title>تتبع الدخل اليومي - تسجيل دخول</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
@@ -20,202 +20,147 @@
     const db = firebase.firestore();
   </script>
   <style>
-    body { font-family: 'Tahoma', sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; text-align: center; }
-    header {
-      background-color: #4a90e2; color: white; padding: 10px;
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-    }
+    body { font-family: Tahoma, sans-serif; background-color: #f4f4f4; text-align: center; }
+    header { background-color: #4a90e2; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     .logo-container { display: flex; align-items: center; gap: 10px; }
-    header img { height: 40px; }
     .header-info { text-align: right; font-size: 14px; }
-    .user-display { font-weight: bold; padding: 10px; color: white; }
-    #logoutBtn { background-color: #dc3545; color: white; border-radius: 5px; padding: 8px 15px; margin: 10px; cursor: pointer; display: none; }
-    #entries { margin: 10px; padding: 10px; background-color: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .user-display { font-weight: bold; color: white; }
+    #logoutBtn { background-color: #dc3545; color: white; border-radius: 5px; padding: 8px 15px; cursor: pointer; display: none; }
+    .fab { position: fixed; bottom: 20px; right: 50%; transform: translateX(50%); background: #28a745; color: white; font-size: 40px; border-radius: 50%; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    #loginModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    #loginBox { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+    #entries { margin: 10px; padding: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .entry { background: #e8f0fe; margin: 5px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; }
-    button, .fab {
-      margin: 5px; padding: 10px 20px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
-    }
-    .fab {
-      position: fixed; bottom: 20px; right: 50%; transform: translateX(50%);
-      background-color: #28a745; color: white; font-size: 40px;
-      border-radius: 50%; width: 80px; height: 80px;
-      display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    }
-    #loginModal {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0, 0, 0, 0.6);
-      display: flex; justify-content: center; align-items: center;
-      z-index: 9999;
-    }
-    #loginBox {
-      background-color: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    }
-    #loginBox input {
-      padding: 10px;
-      font-size: 16px;
-      width: 250px;
-      margin-bottom: 10px;
-    }
   </style>
 </head>
 <body>
-  <div id="loginModal">
-    <div id="loginBox">
-      <h2>تسجيل الدخول</h2>
-      <input type="text" id="usernameInput" placeholder="أدخل اسمك">
-      <br>
-      <button onclick="handleLogin()">دخول</button>
-      <p id="loginAlert" style="color: red; font-weight: bold;"></p>
+<div id="loginModal">
+  <div id="loginBox">
+    <h2>تسجيل الدخول</h2>
+    <input type="text" id="usernameInput" placeholder="أدخل اسمك">
+    <br>
+    <button onclick="handleLogin()">دخول</button>
+    <p id="loginAlert" style="color: red; font-weight: bold;"></p>
+  </div>
+</div><header>
+  <div class="logo-container">
+    <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار" style="height: 40px;">
+    <div class="header-info">
+      <div id="todayDate"></div>
+      <div id="entryCount"></div>
+      <div id="totalEarnings"></div>
     </div>
   </div>
+  <h1>تتبع الدخل اليومي</h1>
+  <div class="user-display" id="userDisplay"></div>
+  <button id="logoutBtn" onclick="logout()">تسجيل الخروج</button>
+</header><div id="entries"></div>
+<button class="fab" id="addButton" onclick="showAddEntryPrompt()">+</button><script>
+  const allowedUsers = ["أحمد طلعت", "محمد سمير"];
+  let entries = [];
+  let currentUser = localStorage.getItem("user") || null;
+  let shiftDate = getShiftDate();
 
-  <header>
-    <div class="logo-container">
-      <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار">
-      <div class="header-info">
-        <div id="todayDate"></div>
-        <div id="entryCount"></div>
-        <div id="totalEarnings"></div>
-      </div>
-    </div>
-    <h1>تتبع الدخل اليومي</h1>
-    <div class="user-display" id="userDisplay"></div>
-    <button id="logoutBtn" onclick="logout()">تسجيل الخروج</button>
-  </header>
+  function getShiftDate() {
+    const now = new Date();
+    const shiftStart = new Date(now);
+    shiftStart.setHours(6, 0, 0, 0);
+    if (now < shiftStart) now.setDate(now.getDate() - 1);
+    return shiftStart.toLocaleDateString("ar-EG", { year: 'numeric', month: 'numeric', day: 'numeric' });
+  }
 
-  <div id="entries"></div>
-  <button class="fab" id="addButton" onclick="showAddEntryPrompt()">+</button>
-
-  <script>
-    let entries = [];
-    let currentUser = null;
-    const allowedUsers = ["أحمد طلعت", "محمد سمير"];
-
-    function getShiftDate() {
-      const now = new Date();
-      const shiftStart = new Date(now);
-      shiftStart.setHours(6, 0, 0, 0);
-      if (now < shiftStart) {
-        now.setDate(now.getDate() - 1);
+  async function checkSession() {
+    const doc = await db.collection("shifts").doc(shiftDate).get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.active && data.username === currentUser) {
+        document.getElementById("loginModal").style.display = "none";
+        document.getElementById("userDisplay").textContent = `المستخدم: ${currentUser}`;
+        if (currentUser !== "ضيف") document.getElementById("logoutBtn").style.display = "inline-block";
+        if (currentUser === "ضيف") document.getElementById("addButton").style.display = "none";
+        if (data.logoutCount >= 2) document.getElementById("logoutBtn").disabled = true;
+        loadEntries();
       }
-      return shiftStart.toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
     }
+  }
 
-    async function handleLogin() {
-      const name = document.getElementById("usernameInput").value.trim();
-      const loginAlert = document.getElementById("loginAlert");
-      if (!name) return;
+  async function handleLogin() {
+    const name = document.getElementById("usernameInput").value.trim();
+    if (!name) return;
 
-      const shiftDate = getShiftDate();
-      const shiftDoc = await db.collection("shifts").doc(shiftDate).get();
-
-      if (shiftDoc.exists) {
-        const data = shiftDoc.data();
-        if (data.active) {
-          alert(`تم تسجيل الدخول بالفعل بواسطة: ${data.username}\nسيتم دخولك كضيف فقط دون صلاحيات.`);
-          currentUser = "ضيف";
-          document.getElementById("loginModal").style.display = "none";
-          document.getElementById("userDisplay").textContent = `المستخدم: ضيف (قراءة فقط)`;
-          document.getElementById("addButton").style.display = 'none';
-          return loadEntries();
-        }
-      }
-
-      currentUser = allowedUsers.includes(name) ? name : "ضيف";
+    const doc = await db.collection("shifts").doc(shiftDate).get();
+    if (doc.exists && doc.data().active) {
+      const data = doc.data();
+      alert(`تم تسجيل الدخول بالفعل بواسطة: ${data.username}\nسيتم دخولك كضيف فقط.`);
+      currentUser = "ضيف";
+      localStorage.setItem("user", currentUser);
       document.getElementById("loginModal").style.display = "none";
-      document.getElementById("userDisplay").textContent = `المستخدم: ${currentUser}`;
-      if (currentUser !== "ضيف") document.getElementById("logoutBtn").style.display = "inline-block";
-      if (currentUser === "ضيف") document.getElementById("addButton").style.display = 'none';
-
-      await db.collection("shifts").doc(shiftDate).set({
-        username: currentUser,
-        logoutCount: 0,
-        active: true
-      });
-
-      loadEntries();
+      document.getElementById("userDisplay").textContent = `المستخدم: ضيف (قراءة فقط)`;
+      document.getElementById("addButton").style.display = 'none';
+      return loadEntries();
     }
 
-    async function logout() {
-      const shiftDate = getShiftDate();
-      const shiftRef = db.collection("shifts").doc(shiftDate);
-      const shiftDoc = await shiftRef.get();
-      if (!shiftDoc.exists) return;
-      const data = shiftDoc.data();
+    currentUser = allowedUsers.includes(name) ? name : "ضيف";
+    localStorage.setItem("user", currentUser);
+    document.getElementById("loginModal").style.display = "none";
+    document.getElementById("userDisplay").textContent = `المستخدم: ${currentUser}`;
+    if (currentUser !== "ضيف") document.getElementById("logoutBtn").style.display = "inline-block";
+    if (currentUser === "ضيف") document.getElementById("addButton").style.display = 'none';
 
-      if (data.logoutCount >= 2) {
-        alert("لقد استهلكت عدد محاولات تسجيل الخروج المسموحة لهذا اليوم.");
-        document.getElementById("logoutBtn").disabled = true;
-        return;
-      }
+    await db.collection("shifts").doc(shiftDate).set({ username: currentUser, logoutCount: 0, active: true });
+    loadEntries();
+  }
 
-      const now = new Date();
-      if (now.getHours() < 6) {
-        alert("لا يمكن تسجيل الخروج قبل الساعة 6 صباحًا");
-        return;
-      }
-
-      await shiftRef.update({
-        logoutCount: data.logoutCount + 1,
-        active: false
-      });
-
-      location.reload();
+  async function logout() {
+    const ref = db.collection("shifts").doc(shiftDate);
+    const doc = await ref.get();
+    if (!doc.exists) return;
+    const data = doc.data();
+    if (data.logoutCount >= 2) {
+      alert("لقد استهلكت محاولات تسجيل الخروج");
+      document.getElementById("logoutBtn").disabled = true;
+      return;
     }
+    if (new Date().getHours() < 6) return alert("لا يمكن الخروج قبل الساعة 6 صباحًا");
+    await ref.update({ logoutCount: data.logoutCount + 1, active: false });
+    localStorage.removeItem("user");
+    location.reload();
+  }
 
-    function updateHeaderInfo() {
-      document.getElementById("todayDate").textContent = getShiftDate();
-      document.getElementById("entryCount").textContent = `عدد العمليات: ${entries.length}`;
-      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
-      document.getElementById("totalEarnings").textContent = `إجمالي الأرباح: ${total} جنيه`;
-    }
+  function showAddEntryPrompt() {
+    if (!allowedUsers.includes(currentUser)) return alert("غير مصرح لك بإضافة عمليات");
+    const price = prompt("أدخل السعر:");
+    const device = prompt("أدخل رقم الجهاز:");
+    if (!price || !device) return;
+    const time = new Date().toLocaleTimeString("ar-EG");
+    const timestamp = new Date().getTime();
+    db.collection("entries").add({ price, device, time, timestamp, date: shiftDate }).then(() => loadEntries());
+  }
 
-    function showAddEntryPrompt() {
-      if (!allowedUsers.includes(currentUser)) {
-        alert("غير مصرح لك بإضافة عمليات");
-        return;
-      }
-      const price = prompt("أدخل السعر بالجنيه:");
-      if (!price) return;
-      const device = prompt("أدخل رقم الجهاز:");
-      if (!device) return;
-      const now = new Date();
-      const time = now.toLocaleTimeString("ar-EG");
-      const timestamp = now.getTime();
-      const date = getShiftDate();
-      const entry = { price, device, time, timestamp, date };
-      db.collection("entries").add(entry).then(() => loadEntries());
-    }
+  function loadEntries() {
+    db.collection("entries").where("date", "==", shiftDate).get().then(snapshot => {
+      entries = [];
+      snapshot.forEach(doc => entries.push(doc.data()));
+      updateDisplay();
+    });
+  }
 
-    function updateDisplay() {
-      const container = document.getElementById("entries");
-      container.innerHTML = `<h3>${getShiftDate()}</h3>`;
-      entries.sort((a, b) => a.timestamp - b.timestamp);
-      entries.forEach(entry => {
-        const div = document.createElement("div");
-        div.className = "entry";
-        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-        container.appendChild(div);
-      });
-      updateHeaderInfo();
-    }
+  function updateDisplay() {
+    const container = document.getElementById("entries");
+    container.innerHTML = `<h3>${shiftDate}</h3>`;
+    entries.sort((a, b) => a.timestamp - b.timestamp);
+    entries.forEach(entry => {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+      container.appendChild(div);
+    });
+    document.getElementById("entryCount").textContent = `عدد العمليات: ${entries.length}`;
+    const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
+    document.getElementById("totalEarnings").textContent = `إجمالي الأرباح: ${total} جنيه`;
+  }
 
-    function loadEntries() {
-      const today = getShiftDate();
-      db.collection("entries").get().then((snapshot) => {
-        entries = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.date === today) {
-            entries.push(data);
-          }
-        });
-        updateDisplay();
-      });
-    }
-  </script>
-</body>
+  // تهيئة تلقائية
+  if (currentUser) checkSession();
+</script></body>
 </html>
