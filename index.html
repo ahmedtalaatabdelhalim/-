@@ -202,8 +202,8 @@
   const entry = {
     price,
     device,
-    time: timeText,      // للعرض
-    timestamp,           // للترتيب الحقيقي
+    time: timeText,
+    timestamp,
     date: getTodayDate()
   };
 
@@ -213,14 +213,13 @@
 }
 
 
+
     function updateDisplay() {
   const container = document.getElementById("entries");
   container.innerHTML = `<h3>${getTodayDate()}</h3>`;
   
-  // ترتيب العمليات حسب الوقت (من الأقدم للأحدث)
-  entries.sort((a, b) => {
-    return new Date(`1970-01-01T${a.time}`) - new Date(`1970-01-01T${b.time}`);
-  });
+  // ✅ ترتيب العمليات حسب timestamp من الأقدم إلى الأحدث
+  entries.sort((a, b) => a.timestamp - b.timestamp);
 
   entries.forEach(entry => {
     const div = document.createElement("div");
@@ -228,6 +227,10 @@
     div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
     container.appendChild(div);
   });
+
+  updateHeaderInfo();
+}
+
 
   updateHeaderInfo();
 }
@@ -250,8 +253,9 @@
     function showEntriesByDate(date) {
       selectedDate = date;
       const container = document.getElementById("entries");
-      const filteredEntries = entries.filter(entry => entry.date === date);
-      .sort((a, b) => a.timestamp - b.timestamp);
+      const filteredEntries = entries
+  .filter(entry => entry.date === date)
+  .sort((a, b) => a.timestamp - b.timestamp);
 });
       const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
       container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
