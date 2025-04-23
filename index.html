@@ -1,164 +1,310 @@
-<!DOCTYPE html><html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>تتبع الدخل اليومي - تسجيل دخول</title>
+  <title>تتبع الدخل اليومي</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Firebase App -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <!-- Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCd76nAgO7m4tBHKf-rWkzwvC4TwrkP2Qg",
       authDomain: "ps4-tracker-4daf6.firebaseapp.com",
       projectId: "ps4-tracker-4daf6",
-      storageBucket: "ps4-tracker-4daf6.appspot.com",
+      storageBucket: "ps4-tracker-4daf6.firebasestorage.app",
       messagingSenderId: "837314276106",
-      appId: "1:837314276106:web:81ca8492a49168a232a8f3"
+      appId: "1:837314276106:web:81ca8492a49168a232a8f3",
+      measurementId: "G-D89Y8216KH"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
   </script>
+
   <style>
-    body { font-family: Tahoma, sans-serif; background-color: #f4f4f4; text-align: center; }
-    header { background-color: #4a90e2; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    .logo-container { display: flex; align-items: center; gap: 10px; }
-    .header-info { text-align: right; font-size: 14px; }
-    .user-display { font-weight: bold; color: white; }
-    #logoutBtn { background-color: #dc3545; color: white; border-radius: 5px; padding: 8px 15px; cursor: pointer; display: none; }
-    .fab { position: fixed; bottom: 20px; right: 50%; transform: translateX(50%); background: #28a745; color: white; font-size: 40px; border-radius: 50%; width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-    #loginModal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-    #loginBox { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
-    #entries { margin: 10px; padding: 10px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .entry { background: #e8f0fe; margin: 5px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; }
+    body {
+      font-family: 'Tahoma', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header img {
+      height: 40px;
+    }
+    .header-info {
+      text-align: right;
+      font-size: 14px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 5px 0;
+      flex: 1 1 100%;
+    }
+    #entries {
+      margin: 10px;
+      padding: 10px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .entry {
+      background: #e8f0fe;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button, .fab {
+      margin: 5px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .fab {
+      position: fixed;
+      bottom: 20px;
+      right: 50%;
+      transform: translateX(50%);
+      background-color: #28a745;
+      color: white;
+      font-size: 40px;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .archive-btn {
+  position: fixed;
+  bottom: 100px; /* تم رفعه أكثر لتفادي تداخله مع الزر الأخضر */
+  left: 20px;    /* محاذاة نحو اليسار */
+  z-index: 999;
+  background-color: #4a90e2;
+  color: white;
+  font-size: 18px;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, transform 0.3s;
+}
+    .archive-btn:hover {
+      background-color: #357ab7;
+      transform: scale(1.05);
+    }
+    .archive-btn:active {
+      transform: scale(0.95);
+    }
+    
+    .archive-btn:focus {
+      outline: none;
+    }
+    .back-btn, .back-to-home-btn {
+      background-color: #dc3545;
+      color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 20px;
+      display: none;
+    }
+    .back-btn:hover, .back-to-home-btn:hover {
+      background-color: #c13536;
+      transform: scale(1.05);
+    }
+    .back-btn:active, .back-to-home-btn:active {
+      transform: scale(0.95);
+    }
+    .back-btn:focus, .back-to-home-btn:focus {
+      outline: none;
+    }
   </style>
 </head>
 <body>
-<div id="loginModal">
-  <div id="loginBox">
-    <h2>تسجيل الدخول</h2>
-    <input type="text" id="usernameInput" placeholder="أدخل اسمك">
-    <br>
-    <button onclick="handleLogin()">دخول</button>
-    <p id="loginAlert" style="color: red; font-weight: bold;"></p>
-  </div>
-</div><header>
-  <div class="logo-container">
-    <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار" style="height: 40px;">
-    <div class="header-info">
-      <div id="todayDate"></div>
-      <div id="entryCount"></div>
-      <div id="totalEarnings"></div>
+  <header>
+    <div class="logo-container">
+      <img src="https://www2.0zz0.com/2025/04/05/13/377189202.png" alt="شعار">
+      <div class="header-info">
+        <div id="todayDate"></div>
+        <div id="entryCount"></div>
+        <div id="totalEarnings"></div>
+      </div>
     </div>
-  </div>
-  <h1>تتبع الدخل اليومي</h1>
-  <div class="user-display" id="userDisplay"></div>
-  <button id="logoutBtn" onclick="logout()">تسجيل الخروج</button>
-</header><div id="entries"></div>
-<button class="fab" id="addButton" onclick="showAddEntryPrompt()">+</button><script>
-  const allowedUsers = ["أحمد طلعت", "محمد سمير"];
-  let entries = [];
-  let currentUser = localStorage.getItem("user") || null;
-  let shiftDate = getShiftDate();
+    <h1>تتبع الدخل اليومي</h1>
+  </header>
 
-  function getShiftDate() {
-    const now = new Date();
-    const shiftStart = new Date(now);
-    shiftStart.setHours(6, 0, 0, 0);
-    if (now < shiftStart) now.setDate(now.getDate() - 1);
-    return shiftStart.toLocaleDateString("ar-EG", { year: 'numeric', month: 'numeric', day: 'numeric' });
-  }
+  <div id="entries"></div>
+  <button class="fab" id="addButton" onclick="showAddEntryPrompt()">+</button>
+  <button class="archive-btn" onclick="showArchive()">عرض الأرشيف</button>
+  <button class="back-to-home-btn" onclick="goBackToHome()">رجوع للصفحة الرئيسية</button>
+  <button class="back-btn" onclick="goBack()">رجوع</button>
 
-  async function checkSession() {
-    const doc = await db.collection("shifts").doc(shiftDate).get();
-    if (doc.exists) {
-      const data = doc.data();
-      if (data.active && data.username === currentUser) {
-        document.getElementById("loginModal").style.display = "none";
-        document.getElementById("userDisplay").textContent = `المستخدم: ${currentUser}`;
-        if (currentUser !== "ضيف") document.getElementById("logoutBtn").style.display = "inline-block";
-        if (currentUser === "ضيف") document.getElementById("addButton").style.display = "none";
-        if (data.logoutCount >= 2) document.getElementById("logoutBtn").disabled = true;
-        loadEntries();
-      }
-    }
-  }
+  <script>
+    let entries = [];
+    let selectedDate = null;  // لتخزين التاريخ المحدد عند اختيار اليوم من الأرشيف
 
-  async function handleLogin() {
-    const name = document.getElementById("usernameInput").value.trim();
-    if (!name) return;
-
-    const doc = await db.collection("shifts").doc(shiftDate).get();
-    if (doc.exists && doc.data().active) {
-      const data = doc.data();
-      alert(`تم تسجيل الدخول بالفعل بواسطة: ${data.username}\nسيتم دخولك كضيف فقط.`);
-      currentUser = "ضيف";
-      localStorage.setItem("user", currentUser);
-      document.getElementById("loginModal").style.display = "none";
-      document.getElementById("userDisplay").textContent = `المستخدم: ضيف (قراءة فقط)`;
-      document.getElementById("addButton").style.display = 'none';
-      return loadEntries();
+    function getTodayDate() {
+      const now = new Date();
+      now.setHours(now.getHours() - 6);
+      return now.toLocaleDateString("ar-EG", {
+        weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
+      });
     }
 
-    currentUser = allowedUsers.includes(name) ? name : "ضيف";
-    localStorage.setItem("user", currentUser);
-    document.getElementById("loginModal").style.display = "none";
-    document.getElementById("userDisplay").textContent = `المستخدم: ${currentUser}`;
-    if (currentUser !== "ضيف") document.getElementById("logoutBtn").style.display = "inline-block";
-    if (currentUser === "ضيف") document.getElementById("addButton").style.display = 'none';
+    function updateHeaderInfo() {
+      document.getElementById("todayDate").textContent = getTodayDate();
+      document.getElementById("entryCount").textContent = `عدد العمليات: ${entries.length}`;
+      const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
+      document.getElementById("totalEarnings").textContent = `إجمالي الأرباح: ${total} جنيه`;
+    }
 
-    await db.collection("shifts").doc(shiftDate).set({ username: currentUser, logoutCount: 0, active: true });
+    function showAddEntryPrompt() {
+  const price = prompt("أدخل السعر بالجنيه:");
+  if (!price) return;
+  const device = prompt("أدخل رقم الجهاز:");
+  if (!device) return;
+
+  const now = new Date();
+  const timeText = now.toLocaleTimeString("ar-EG");
+  const timestamp = now.getTime();
+
+  const entry = {
+    price,
+    device,
+    time: timeText,      // للعرض
+    timestamp,           // للترتيب الحقيقي
+    date: getTodayDate()
+  };
+
+  db.collection("entries").add(entry).then(() => {
     loadEntries();
-  }
+  });
+}
 
-  async function logout() {
-    const ref = db.collection("shifts").doc(shiftDate);
-    const doc = await ref.get();
-    if (!doc.exists) return;
-    const data = doc.data();
-    if (data.logoutCount >= 2) {
-      alert("لقد استهلكت محاولات تسجيل الخروج");
-      document.getElementById("logoutBtn").disabled = true;
-      return;
+
+    function updateDisplay() {
+  const container = document.getElementById("entries");
+  container.innerHTML = `<h3>${getTodayDate()}</h3>`;
+
+  // ✅ ترتيب حسب timestamp
+  entries.sort((a, b) => a.timestamp - b.timestamp);
+
+  entries.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+    container.appendChild(div);
+  });
+
+  updateHeaderInfo();
+}
+
+
+    function loadEntries() {
+  const today = getTodayDate();
+  db.collection("entries").get().then((snapshot) => {
+    entries = [];
+    snapshot.forEach(doc => {
+      const entryData = doc.data();
+      if (entryData.date === today) {
+        entries.push(entryData);
+      }
+    });
+    updateDisplay();
+  });
+}
+
+    function showEntriesByDate(date) {
+  selectedDate = date;
+  const container = document.getElementById("entries");
+
+  const filteredEntries = entries
+    .filter(entry => entry.date === date)
+    .sort((a, b) => a.timestamp - b.timestamp); // ✅ ترتيب حقيقي
+
+  const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
+  container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
+  filteredEntries.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+    container.appendChild(div);
+  });
+  container.innerHTML += `<h4>إجمالي الأرباح لهذا اليوم: ${total} جنيه</h4>`;
+  document.querySelector(".back-btn").style.display = "block";
+  document.querySelector(".back-to-home-btn").style.display = "none";
+}
+
+    function showArchive() {
+      const container = document.getElementById("entries");
+      document.getElementById("addButton").style.display = 'none';
+      container.innerHTML = "<h3>الأرشيف</h3>";
+
+      const dates = [...new Set(entries.map(entry => entry.date))];
+      dates.forEach(date => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `<button onclick="showEntriesByDate('${date}')">${date}</button>`;
+        container.appendChild(div);
+      });
+
+      document.querySelector(".archive-btn").style.display = "none";
+      document.querySelector(".back-to-home-btn").style.display = "block";
     }
-    if (new Date().getHours() < 6) return alert("لا يمكن الخروج قبل الساعة 6 صباحًا");
-    await ref.update({ logoutCount: data.logoutCount + 1, active: false });
-    localStorage.removeItem("user");
-    location.reload();
-  }
 
-  function showAddEntryPrompt() {
-    if (!allowedUsers.includes(currentUser)) return alert("غير مصرح لك بإضافة عمليات");
-    const price = prompt("أدخل السعر:");
-    const device = prompt("أدخل رقم الجهاز:");
-    if (!price || !device) return;
-    const time = new Date().toLocaleTimeString("ar-EG");
-    const timestamp = new Date().getTime();
-    db.collection("entries").add({ price, device, time, timestamp, date: shiftDate }).then(() => loadEntries());
-  }
+    function goBack() {
+      selectedDate = null;
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>تتبع الدخل اليومي</h3>";
+      loadEntries();
+      document.querySelector(".back-btn").style.display = "none";
+      document.querySelector(".archive-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+      document.getElementById("addButton").style.display = 'flex';
+    }
 
-  function loadEntries() {
-    db.collection("entries").where("date", "==", shiftDate).get().then(snapshot => {
-      entries = [];
-      snapshot.forEach(doc => entries.push(doc.data()));
-      updateDisplay();
-    });
-  }
+    function goBackToHome() {
+      selectedDate = null;
+      const container = document.getElementById("entries");
+      container.innerHTML = "<h3>تتبع الدخل اليومي</h3>";
+      loadEntries();
+      document.querySelector(".archive-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+      document.getElementById("addButton").style.display = 'flex';
+    }
 
-  function updateDisplay() {
-    const container = document.getElementById("entries");
-    container.innerHTML = `<h3>${shiftDate}</h3>`;
-    entries.sort((a, b) => a.timestamp - b.timestamp);
-    entries.forEach(entry => {
-      const div = document.createElement("div");
-      div.className = "entry";
-      div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-      container.appendChild(div);
-    });
-    document.getElementById("entryCount").textContent = `عدد العمليات: ${entries.length}`;
-    const total = entries.reduce((sum, e) => sum + Number(e.price), 0);
-    document.getElementById("totalEarnings").textContent = `إجمالي الأرباح: ${total} جنيه`;
-  }
-
-  // تهيئة تلقائية
-  if (currentUser) checkSession();
-</script></body>
+    loadEntries();
+  </script>
+</body>
 </html>
