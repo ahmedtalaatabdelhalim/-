@@ -26,7 +26,125 @@
   </script>
 
   <style>
-    /* ... نفس التنسيقات التي أرسلتها سابقًا ... */
+    body {
+      font-family: 'Tahoma', sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      background-color: #4a90e2;
+      color: white;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header img {
+      height: 40px;
+    }
+    .header-info {
+      text-align: right;
+      font-size: 14px;
+    }
+    h1 {
+      font-size: 20px;
+      margin: 5px 0;
+      flex: 1 1 100%;
+    }
+    #entries {
+      margin: 10px;
+      padding: 10px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .entry {
+      background: #e8f0fe;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button, .fab {
+      margin: 5px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .fab {
+      position: fixed;
+      bottom: 20px;
+      right: 50%;
+      transform: translateX(50%);
+      background-color: #28a745;
+      color: white;
+      font-size: 40px;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .archive-btn {
+      background-color: #4a90e2;
+      color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 20px;
+    }
+    .archive-btn:hover {
+      background-color: #357ab7;
+      transform: scale(1.05);
+    }
+    .archive-btn:active {
+      transform: scale(0.95);
+    }
+    .archive-btn:focus {
+      outline: none;
+    }
+    .back-btn, .back-to-home-btn {
+      background-color: #dc3545;
+      color: white;
+      font-size: 18px;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: background-color 0.3s, transform 0.3s;
+      margin-top: 20px;
+      display: none;
+    }
+    .back-btn:hover, .back-to-home-btn:hover {
+      background-color: #c13536;
+      transform: scale(1.05);
+    }
+    .back-btn:active, .back-to-home-btn:active {
+      transform: scale(0.95);
+    }
+    .back-btn:focus, .back-to-home-btn:focus {
+      outline: none;
+    }
   </style>
 </head>
 <body>
@@ -50,7 +168,7 @@
 
   <script>
     let entries = [];
-    let selectedDate = null;
+    let selectedDate = null;  // لتخزين التاريخ المحدد عند اختيار اليوم من الأرشيف
 
     function getTodayDate() {
       const now = new Date();
@@ -68,80 +186,81 @@
     }
 
     function showAddEntryPrompt() {
-      const price = prompt("أدخل السعر بالجنيه:");
-      if (!price) return;
-      const device = prompt("أدخل رقم الجهاز:");
-      if (!device) return;
+  const price = prompt("أدخل السعر بالجنيه:");
+  if (!price) return;
+  const device = prompt("أدخل رقم الجهاز:");
+  if (!device) return;
 
-      const now = new Date();
-      const timeText = now.toLocaleTimeString("ar-EG");
-      const timestamp = now.getTime();
+  const now = new Date();
+  const timeText = now.toLocaleTimeString("ar-EG");
+  const timestamp = now.getTime();
 
-      const entry = {
-        price,
-        device,
-        time: timeText,
-        timestamp,
-        date: getTodayDate()
-      };
+  const entry = {
+    price,
+    device,
+    time: timeText,      // للعرض
+    timestamp,           // للترتيب الحقيقي
+    date: getTodayDate()
+  };
 
-      db.collection("entries").add(entry).then(() => {
-        loadEntries();
-      });
-    }
+  db.collection("entries").add(entry).then(() => {
+    loadEntries();
+  });
+}
+
 
     function updateDisplay() {
-      const container = document.getElementById("entries");
-      container.innerHTML = `<h3>${getTodayDate()}</h3>`;
+  const container = document.getElementById("entries");
+  container.innerHTML = `<h3>${getTodayDate()}</h3>`;
 
-      // ✅ ترتيب العمليات حسب timestamp
-      entries.sort((a, b) => a.timestamp - b.timestamp);
+  // ✅ ترتيب حسب timestamp
+  entries.sort((a, b) => a.timestamp - b.timestamp);
 
-      entries.forEach(entry => {
-        const div = document.createElement("div");
-        div.className = "entry";
-        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-        container.appendChild(div);
-      });
+  entries.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+    container.appendChild(div);
+  });
 
-      updateHeaderInfo();
-    }
+  updateHeaderInfo();
+}
+
 
     function loadEntries() {
-      const today = getTodayDate();
-      db.collection("entries").get().then((snapshot) => {
-        entries = [];
-        snapshot.forEach(doc => {
-          const entryData = doc.data();
-          if (entryData.date === today) {
-            entries.push(entryData);
-          }
-        });
-        updateDisplay();
-      });
-    }
+  const today = getTodayDate();
+  db.collection("entries").get().then((snapshot) => {
+    entries = [];
+    snapshot.forEach(doc => {
+      const entryData = doc.data();
+      if (entryData.date === today) {
+        entries.push(entryData);
+      }
+    });
+    updateDisplay();
+  });
+}
 
     function showEntriesByDate(date) {
-      selectedDate = date;
-      const container = document.getElementById("entries");
+  selectedDate = date;
+  const container = document.getElementById("entries");
 
-      const filteredEntries = entries
-        .filter(entry => entry.date === date)
-        .sort((a, b) => a.timestamp - b.timestamp); // ✅ تم إصلاحه
+  const filteredEntries = entries
+    .filter(entry => entry.date === date)
+    .sort((a, b) => a.timestamp - b.timestamp); // ✅ ترتيب حقيقي
 
-      const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
-
-      container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
-      filteredEntries.forEach(entry => {
-        const div = document.createElement("div");
-        div.className = "entry";
-        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
-        container.appendChild(div);
-      });
-      container.innerHTML += `<h4>إجمالي الأرباح لهذا اليوم: ${total} جنيه</h4>`;
-      document.querySelector(".back-btn").style.display = "block";
-      document.querySelector(".back-to-home-btn").style.display = "none";
-    }
+  const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
+  container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
+  filteredEntries.forEach(entry => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
+    container.appendChild(div);
+  });
+  container.innerHTML += `<h4>إجمالي الأرباح لهذا اليوم: ${total} جنيه</h4>`;
+  document.querySelector(".back-btn").style.display = "block";
+  document.querySelector(".back-to-home-btn").style.display = "none";
+}
 
     function showArchive() {
       const container = document.getElementById("entries");
