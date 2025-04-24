@@ -236,11 +236,10 @@
 
   updateHeaderInfo();
 }
-
-
     function loadEntries() {
   const today = getTodayDate();
-  db.collection("entries").get().then((snapshot) => {
+
+  db.collection("entries").onSnapshot((snapshot) => {
     entries = [];
     snapshot.forEach(doc => {
       const entryData = doc.data();
@@ -251,6 +250,7 @@
     updateDisplay();
   });
 }
+
 
     function showEntriesByDate(date) {
   selectedDate = date;
