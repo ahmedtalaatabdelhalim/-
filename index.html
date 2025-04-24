@@ -175,12 +175,19 @@
     let selectedDate = null;  // لتخزين التاريخ المحدد عند اختيار اليوم من الأرشيف
 
     function getTodayDate() {
-      const now = new Date();
-      now.setHours(now.getHours() - 6);
-      return now.toLocaleDateString("ar-EG", {
-        weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
-      });
-    }
+  const now = new Date();
+  const hour = now.getHours();
+
+  // لو الساعة أقل من 6 الصبح، اعتبره تابع لليوم السابق
+  if (hour < 6) {
+    now.setDate(now.getDate() - 1);
+  }
+
+  return now.toLocaleDateString("ar-EG", {
+    weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
+  });
+}
+
 
     function updateHeaderInfo() {
       document.getElementById("todayDate").textContent = getTodayDate();
