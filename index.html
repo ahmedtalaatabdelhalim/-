@@ -254,16 +254,27 @@ let isGuest = false;        // هل المستخدم ضيف؟
 
 function initializeShift() {
   const today = getTodayDate();
-
   db.collection("shiftEmployees").doc(today).get().then(doc => {
     if (doc.exists) {
-      // يوجد موظف مسجل --> المستخدم ضيف
       currentEmployee = doc.data().employee;
-      isGuest = true;
-      document.getElementById("addButton").style.display = 'none'; // ❌ يخفي زر الإضافة
-      alert(`الشيفت اليوم يعمل عليه: ${currentEmployee}.\nأنت الآن في وضع المشاهدة فقط.`);
+      
+      const storedEmployee = localStorage.getItem('shiftEmployee'); // 🌟
+
+      if (storedEmployee === currentEmployee) {
+        // ✅ نفس الموظف اللي سجل --> مسؤول
+        isGuest = false;
+        document.getElementById("addButton").style.display = 'flex';
+      } else {
+        // ❌ شخص تاني --> ضيف
+        isGuest = true;
+        document.getElementById("addButton").style.display = 'none';
+        alert(`الشيفت اليوم يعمل عليه: ${currentEmployee}.\nأنت الآن في وضع المشاهدة فقط.`);
+      }
+
+      document.getElementById("shiftEmployeeName").textContent = `مسؤول الشيفت: ${currentEmployee}`;
+
     } else {
-      // لا يوجد موظف --> المستخدم أول موظف --> يسجل اسمه
+      // مفيش موظف مسجل --> تسجيل جديد
       const name = prompt("أدخل اسم الموظف المسؤول عن الشيفت:");
       if (!name) {
         alert("يجب إدخال اسم الموظف!");
@@ -272,11 +283,14 @@ function initializeShift() {
       }
       currentEmployee = name;
       db.collection("shiftEmployees").doc(today).set({ employee: name });
+      localStorage.setItem('shiftEmployee', name); // ✨ نحفظ الاسم هنا
       isGuest = false;
-      document.getElementById("addButton").style.display = 'flex'; // ✅ يظهر زر الإضافة
+      document.getElementById("addButton").style.display = 'flex';
+      document.getElementById("shiftEmployeeName").textContent = `مسؤول الشيفت: ${currentEmployee}`;
     }
   });
 }
+
 
 
     function updateDisplay() {
