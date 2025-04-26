@@ -248,6 +248,34 @@ function archivePreviousDay(dateToArchive) {
   });
 }
 
+let currentEmployee = null; // الموظف الحالي
+let isGuest = false;        // هل المستخدم ضيف؟
+
+function initializeShift() {
+  const today = getTodayDate();
+
+  db.collection("shiftEmployees").doc(today).get().then(doc => {
+    if (doc.exists) {
+      // يوجد موظف مسجل --> المستخدم ضيف
+      currentEmployee = doc.data().employee;
+      isGuest = true;
+      document.getElementById("addButton").style.display = 'none'; // ❌ يخفي زر الإضافة
+      alert(`الشيفت اليوم يعمل عليه: ${currentEmployee}.\nأنت الآن في وضع المشاهدة فقط.`);
+    } else {
+      // لا يوجد موظف --> المستخدم أول موظف --> يسجل اسمه
+      const name = prompt("أدخل اسم الموظف المسؤول عن الشيفت:");
+      if (!name) {
+        alert("يجب إدخال اسم الموظف!");
+        location.reload();
+        return;
+      }
+      currentEmployee = name;
+      db.collection("shiftEmployees").doc(today).set({ employee: name });
+      isGuest = false;
+      document.getElementById("addButton").style.display = 'flex'; // ✅ يظهر زر الإضافة
+    }
+  });
+}
 
 
     function updateDisplay() {
