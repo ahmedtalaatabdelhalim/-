@@ -205,19 +205,49 @@
   const now = new Date();
   const timeText = now.toLocaleTimeString("ar-EG");
   const timestamp = now.getTime();
+  const today = getTodayDate();
 
-  const entry = {
-    price,
-    device,
-    time: timeText,      // للعرض
-    timestamp,           // للترتيب الحقيقي
-    date: getTodayDate()
-  };
+  // ✅ تحقق إذا تغير اليوم
+  if (today !== lastSavedDate) {
+    archivePreviousDay(lastSavedDate).then(() => {
+      lastSavedDate = today;
+      saveNewEntry(price, device, timeText, timestamp, today);
+    });
+  } else {
+    saveNewEntry(price, device, timeText, timestamp, today);
+  }
+}
 
+// دالة لحفظ عملية جديدة
+function saveNewEntry(price, device, timeText, timestamp, today) {
+  const entry = { price, device, time: timeText, timestamp, date: today };
   db.collection("entries").add(entry).then(() => {
     loadEntries();
   });
 }
+
+// دالة لأرشفة اليوم السابق
+function archivePreviousDay(dateToArchive) {
+  const entriesToArchive = entries.filter(e => e.date === dateToArchive);
+  const batch = db.batch();
+
+  entriesToArchive.forEach(entry => {
+    const newDocRef = db.collection("archives").doc(); // أرشفة في مجموعة جديدة
+    batch.set(newDocRef, entry);
+  });
+
+  // بعد الأرشفة احذف القديم (اختياري)
+  const deletePromises = [];
+  return db.collection("entries").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      if (doc.data().date === dateToArchive) {
+        deletePromises.push(doc.ref.delete());
+      }
+    });
+    return Promise.all(deletePromises).then(() => batch.commit());
+  });
+}
+
 
 
     function updateDisplay() {
@@ -274,21 +304,61 @@
 }
 
     function showArchive() {
-      const container = document.getElementById("entries");
-      document.getElementById("addButton").style.display = 'none';
-      container.innerHTML = "<h3>الأرشيف</h3>";
+  const container = document.getElementById("entries");
+  document.getElementById("addButton").style.display = 'none';
+  container.innerHTML = "<h3>الأرشيف</h3>";
 
-      const dates = [...new Set(entries.map(entry => entry.date))];
-      dates.forEach(date => {
+  // جلب البيانات من مجموعة الأرشيف
+  db.collection("archives").get().then(snapshot => {
+    const archiveEntries = [];
+    snapshot.forEach(doc => {
+      archiveEntries.push(doc.data());
+    });
+
+    // استخرج الأيام بدون تكرار
+    const dates = [...new Set(archiveEntries.map(entry => entry.date))];
+
+    dates.forEach(date => {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `<button onclick="showEntriesFromArchive('${date}')">${date}</button>`;
+      container.appendChild(div);
+    });
+
+    document.querySelector(".archive-btn").style.display = "none";
+    document.querySelector(".back-to-home-btn").style.display = "block";
+  });
+}
+
+function showEntriesFromArchive(date) {
+  selectedDate = date;
+  const container = document.getElementById("entries");
+
+  db.collection("archives")
+    .where("date", "==", date)
+    .orderBy("timestamp")
+    .get()
+    .then(snapshot => {
+      const filteredEntries = [];
+      snapshot.forEach(doc => {
+        filteredEntries.push(doc.data());
+      });
+
+      const total = filteredEntries.reduce((sum, e) => sum + Number(e.price), 0);
+      
+      container.innerHTML = `<h3>عمليات يوم: ${date}</h3>`;
+      filteredEntries.forEach(entry => {
         const div = document.createElement("div");
         div.className = "entry";
-        div.innerHTML = `<button onclick="showEntriesByDate('${date}')">${date}</button>`;
+        div.innerHTML = `<span>${entry.price} جنيه - جهاز ${entry.device} - ${entry.time}</span>`;
         container.appendChild(div);
       });
 
-      document.querySelector(".archive-btn").style.display = "none";
-      document.querySelector(".back-to-home-btn").style.display = "block";
-    }
+      container.innerHTML += `<h4>إجمالي الأرباح لهذا اليوم: ${total} جنيه</h4>`;
+      document.querySelector(".back-btn").style.display = "block";
+      document.querySelector(".back-to-home-btn").style.display = "none";
+    });
+}
 
     function goBack() {
       selectedDate = null;
