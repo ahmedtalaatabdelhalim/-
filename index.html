@@ -174,6 +174,7 @@
   <script>
     let entries = [];
     let selectedDate = null;  // لتخزين التاريخ المحدد عند اختيار اليوم من الأرشيف
+    let lastSavedDate = getTodayDate();
 
     function getTodayDate() {
   const now = new Date();
